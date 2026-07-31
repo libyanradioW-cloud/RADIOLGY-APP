@@ -24,7 +24,9 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
         let fileUrl = '';
 
         if (req.file) {
-            const fileName = ${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')};
+            const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const fileName = Date.now() + '_' + cleanName;
+
             const { data, error } = await supabase.storage
                 .from('MEDICAL-FILES')
                 .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
@@ -59,7 +61,8 @@ app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
         if (item) {
             item.reportText = req.body.reportText || '';
             if (req.file) {
-                const fileName = reports/${Date.now()}_${req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')};
+                const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const fileName = 'reports/' + Date.now() + '_' + cleanName;
                 await supabase.storage.from('MEDICAL-FILES').upload(fileName, req.file.buffer);
                 const publicData = supabase.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
                 item.wordUrl = publicData.data.publicUrl;
@@ -73,4 +76,4 @@ app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(Server is running on port ${PORT}));
+app.listen(PORT, () => console.log(Server running on port ${PORT}));
