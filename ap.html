@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إرسال فحص الأشعة</title>
+    <style>
+        :root {
+            --primary: #0284c7;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --card: #ffffff;
+        }
+        * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: var(--card); padding: 30px; border-radius: 12px; width: 100%; max-width: 480px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        h2 { color: #0f172a; margin-bottom: 6px; font-size: 20px; }
+        p.subtitle { color: #64748b; font-size: 13px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+        .field { margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 13px; font-weight: 600; color: #334155; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; background: #f8fafc; outline: none; }
+        input:focus, select:focus { border-color: var(--primary); background: #fff; }
+        .drop-zone { border: 2px dashed #cbd5e1; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; background: #f8fafc; transition: 0.2s; }
+        .drop-zone:hover { border-color: var(--primary); background: #f0f9ff; }
+        .progress-box { display: none; margin-top: 15px; background: #f1f5f9; padding: 12px; border-radius: 6px; }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-top: 6px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.1s; }
+        .badge-success { display: none; margin-top: 15px; padding: 10px; background: #dcfce7; border: 1px solid #86efac; color: #166534; border-radius: 6px; text-align: center; font-size: 13px; font-weight: 600; }
+        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 15px; }
+        button:hover { background: #0369a1; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>إرسال فحص مريض</h2>
+    <p class="subtitle">أدخل بيانات المريض وارفع ملف الأشعة المضغوط</p>
+
+    <form id="uploadForm">
+        <div class="grid">
+            <div class="field">
+                <label>اسم المريض</label>
+                <input type="text" id="pName" required placeholder="أدخل اسم المريض">
+            </div>
+            <div class="field">
+                <label>العمر</label>
+                <input type="number" id="pAge" required placeholder="العمر">
+            </div>
+        </div>
+
+        <div class="field">
+            <label>نوع الفحص</label>
+            <select id="pExam" required>
+                <option value="">اختر نوع الفحص...</option>
+                <option value="CT Scan">تصوير مقطعي (CT Scan)</option>
+                <option value="MRI">رنين مغناطيسي (MRI)</option>
+                <option value="X-Ray">أشعة سينية (X-Ray)</option>
+                <option value="Ultrasound">موجات فوق صوتية (Ultrasound)</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label>ملف الأشعة المضغوط (ZIP)</label>
+            <div class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <div style="font-size:24px;">📁</div>
+                <div id="fileTxt" style="font-size:12px; color:#64748b;">اضغط هنا لاختيار الملف المضغوط</div>
+                <input type="file" id="fileInput" style="display:none" accept=".zip,.rar" required>
+            </div>
+        </div>
+
+        <div class="progress-box" id="pBox">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;">
+                <span id="pStatus">جاري الرفع...</span>
+                <span id="pPercent">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="pFill"></div></div>
+        </div>
+
+        <div class="badge-success" id="successBadge">
+            ✓ تم رفع الفحص واكتمال وصوله للجهاز الآخر بنجاح!
+        </div>
+
+        <button type="submit" id="subBtn">إرسال الفحص الآن</button>
+    </form>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const fileTxt = document.getElementById('fileTxt');
+    const uploadForm = document.getElementById('uploadForm');
+
+    fileInput.onchange = () => {
+        if(fileInput.files.length) fileTxt.innerHTML = `<b>تم اختيار:</b> ${fileInput.files[0].name}`;
+    };
+
+    uploadForm.onsubmit = (e) => {
+        e.preventDefault();
+        
+        const pBox = document.getElementById('pBox');
+        const pFill = document.getElementById('pFill');
+        const pPercent = document.getElementById('pPercent');
+        const badge = document.getElementById('successBadge');
+        const btn = document.getElementById('subBtn');
+
+        pBox.style.display = 'block';
+        badge.style.display = 'none';
+        btn.disabled = true;
+
+        let progress = 0;
+        const timer = setInterval(() => {
+            progress += 10;
+            pFill.style.width = progress + '%';
+            pPercent.textContent = progress + '%';
+
+            if(progress >= 100) {
+                clearInterval(timer);
+                pFill.style.background = '#10b981';
+                badge.style.display = 'block';
+                btn.disabled = false;
+                uploadForm.reset();
+                fileTxt.textContent = "اضغط هنا لاختيار الملف المضغوط";
+            }
+        }, 200);
+    };
+</script>
+
+</body>
+</html>
