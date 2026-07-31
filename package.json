@@ -1,7 +1,6 @@
 {
   "name": "radiology-app",
   "version": "1.0.0",
-  "description": "Radiology System",
   "main": "serves.js",
   "scripts": {
     "start": "node serves.js"
