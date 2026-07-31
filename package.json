@@ -1,9 +1,10 @@
 {
-  "name": "radiology-system",
+  "name": "radiology-app",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "Radiology System",
+  "main": "serves.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node serves.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
