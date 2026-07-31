@@ -1,79 +1,32 @@
 const express = require('express');
-const multer = require('multer');
-const { createClient } = require('@supabase/supabase-js');
-
 const app = express();
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
-const upload = multer({ storage: multer.memoryStorage() });
-
-const SUPABASE_URL = 'https://ctinfdachjsqwqbuumgj.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_lOy6jzHus_ICjJX4tDvxrQ_u7xpSojJ';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let cases = [];
+let cases = [
+    { id: 1, name: "محمود علي الأشهر", age: "45", exam: "CT Scan", status: "pending" },
+    { id: 2, name: "سالم محمد النائب", age: "32", exam: "MRI", status: "completed" }
+];
 
 app.get('/api/cases', (req, res) => {
     res.json(cases);
 });
 
-app.post('/api/upload', upload.single('file'), async (req, res) => {
-    try {
-        const { name, age, exam } = req.body;
-        let fileUrl = '';
-
-        if (req.file) {
-            const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const fileName = Date.now() + '_' + cleanName;
-
-            const { data, error } = await supabase.storage
-                .from('MEDICAL-FILES')
-                .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
-
-            if (!error) {
-                const publicData = supabase.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
-                fileUrl = publicData.data.publicUrl;
-            }
-        }
-
-        const newCase = {
-            id: Date.now(),
-            name: name || 'بدون اسم',
-            age: age || '-',
-            exam: exam || '-',
-            zipUrl: fileUrl,
-            status: 'pending',
-            reportText: '',
-            wordUrl: null
-        };
-
-        cases.unshift(newCase);
-        res.json({ success: true, case: newCase });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
-    try {
-        const item = cases.find(c => c.id == req.params.id);
-        if (item) {
-            item.reportText = req.body.reportText || '';
-            if (req.file) {
-                const cleanName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-                const fileName = 'reports/' + Date.now() + '_' + cleanName;
-                await supabase.storage.from('MEDICAL-FILES').upload(fileName, req.file.buffer);
-                const publicData = supabase.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
-                item.wordUrl = publicData.data.publicUrl;
-            }
-            item.status = 'completed';
-        }
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
-    }
+app.post('/api/upload', (req, res) => {
+    const { name, age, exam } = req.body;
+    const newCase = {
+        id: Date.now(),
+        name: name || 'بدون اسم',
+        age: age || '-',
+        exam: exam || '-',
+        status: 'pending'
+    };
+    cases.unshift(newCase);
+    res.json({ success: true, case: newCase });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(Server running on port ${PORT}));
+app.listen(PORT, () => {
+    console.log(Server is running on port ${PORT});
+});
