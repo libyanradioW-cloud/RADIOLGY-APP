@@ -124,6 +124,46 @@
         }, 200);
     };
 </script>
+<!-- تضمين مكتبة Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://ctinfdachjsqwqbuumgj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_lOy6jzHus_ICjJX4tDvxrQ_u7xpSojJ';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  async function uploadCase(event) {
+    event.preventDefault();
+    const name = document.getElementById('patientName').value;
+    const age = document.getElementById('patientAge').value;
+    const exam = document.getElementById('examType').value;
+    const fileInput = document.getElementById('zipFile');
+    const file = fileInput.files[0];
+
+    let zipUrl = '';
+    if (file) {
+      const fileName = ${Date.now()}_${file.name};
+      const { data, error } = await supabaseClient.storage
+        .from('MEDICAL-FILES')
+        .upload(fileName, file);
+      
+      if (!error) {
+        const publicUrlData = supabaseClient.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
+        zipUrl = publicUrlData.data.publicUrl;
+      }
+    }
+
+    // حفظ بيانات الحالة في الجدول
+    const { error: dbError } = await supabaseClient
+      .from('cases')
+      .insert([{ name, age, exam, zip_url: zipUrl }]);
+
+    if (!dbError) {
+      alert('تم إرسال الحالة بنجاح!');
+      location.reload();
+    } else {
+      alert('حدث خطأ أثناء إرسال الحالة: ' + dbError.message);
+    }
+  }
+</script>
 </body>
 </html>
