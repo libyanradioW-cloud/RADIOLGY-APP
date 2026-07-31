@@ -8,9 +8,11 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ 
+    storage,
+    limits: { fileSize: 100 * 1024 * 1024 } // رفع حد الملفات إلى 100 ميجابايت
+});
 
-// تم وضع البيانات الخاصة بك هنا مباشرة
 const SUPABASE_URL = 'https://ctinfdachjsqwqbuumgj.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_lOy6jzHus_ICjJX4tDvxrQ_u7xpSojJ';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -21,22 +23,26 @@ let cases = [];
 app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
         const { name, age, exam } = req.body;
-        const fileName = `${Date.now()}-${req.file.originalname}`;
+        if (!req.file) throw new Error("لم يتم اختيار ملف للرفع");
+
+        const fileName = ${Date.now()}-${encodeURIComponent(req.file.originalname)};
 
         const { error } = await supabase.storage
             .from('MEDICAL-FILES')
-            .upload(fileName, req.file.buffer, { contentType: req.file.mimetype });
+            .upload(fileName, req.file.buffer, { contentType: req.file.mimetype, upsert: true });
 
-        if (error) throw error;
-
-        const { data: publicUrlData } = supabase.storage
-            .from('MEDICAL-FILES')
-            .getPublicUrl(fileName);
+        let fileUrl = '';
+        if (!error) {
+            const { data } = supabase.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
+            fileUrl = data.publicUrl;
+        }
 
         const newCase = {
             id: Date.now(),
-            name, age, exam,
-            zipUrl: publicUrlData.publicUrl,
+            name: name || 'بدون اسم',
+            age: age || '-',
+            exam: exam || '-',
+            zipUrl: fileUrl,
             status: 'pending',
             reportText: '',
             wordUrl: null
@@ -45,6 +51,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
         cases.unshift(newCase);
         res.json({ success: true, case: newCase });
     } catch (err) {
+        console.error("Upload error:", err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -59,8 +66,8 @@ app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
         if (item) {
             item.reportText = req.body.reportText || '';
             if (req.file) {
-                const fileName = `reports/${Date.now()}-${req.file.originalname}`;
-                await supabase.storage.from('MEDICAL-FILES').upload(fileName, req.file.buffer);
+                const fileName = reports/${Date.now()}-${encodeURIComponent(req.file.originalname)};
+                await supabase.storage.from('MEDICAL-FILES').upload(fileName, req.file.buffer, { upsert: true });
                 const { data } = supabase.storage.from('MEDICAL-FILES').getPublicUrl(fileName);
                 item.wordUrl = data.publicUrl;
             }
@@ -73,4 +80,4 @@ app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`المنظومة تعمل على المنفذ ${PORT}`));
+app.listen(PORT, () => console.log(المنظومة تعمل على المنفذ ${PORT}));
