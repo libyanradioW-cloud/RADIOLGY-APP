@@ -107,6 +107,25 @@
         }
     };
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://ctinfdachjsqwqbuumgj.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_lOy6jzHus_ICjJX4tDvxrQ_u7xpSojJ';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  async function fetchCases() {
+    const { data: cases, error } = await supabaseClient
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (!error) {
+      renderCasesList(cases);
+    }
+  }
+
+  // استدعاء الحالات فور فتح الصفحة
+  fetchCases();
+</script>
 </body>
 </html>
