@@ -15,7 +15,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let cases = [];
 
-// API رفع الفحص
 app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
         const { name, age, exam } = req.body;
@@ -51,10 +50,8 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     }
 });
 
-// API عرض الحالات
 app.get('/api/cases', (req, res) => res.json(cases));
 
-// API رفع تقرير الطبيب
 app.post('/api/report/:id', upload.single('wordFile'), async (req, res) => {
     try {
         const item = cases.find(c => c.id == req.params.id);
